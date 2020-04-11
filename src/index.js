@@ -1,4 +1,8 @@
+// External libraries
 import { GraphQLServer } from "graphql-yoga";
+import { v4 as uuidv4 } from "uuid";
+
+// Internal
 import { customIncludes } from "./common";
 
 // ----------- Demo data -----------
@@ -98,6 +102,10 @@ const typeDefs = `
     users(query: String): [User!]!
   }
 
+  type Mutation {
+    createUser(name: String!, email: String!, age: Int): User!
+  }
+
   type Comment {
     id: ID!
     text: String!
@@ -147,6 +155,26 @@ const resolvers = {
       return users.filter((user) => {
         return customIncludes(user.name, args.query);
       });
+    },
+  },
+
+  Mutation: {
+    createUser(parent, args, ctx, info) {
+      const emailTaken = users.some((user) => user.email === args.email);
+
+      if (emailTaken) {
+        throw new Error("Email already taken.");
+      }
+
+      const user = {
+        id: uuidv4(),
+        name: args.name,
+        email: args.email,
+        age: args.age,
+      };
+
+      users.push(user);
+      return user;
     },
   },
 
