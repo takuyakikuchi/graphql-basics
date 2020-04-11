@@ -1,3 +1,7 @@
+# Basic GraphQL
+
+This is a tutorial from udemy.
+
 # Stack
 
 - GQL server: graphql-yoga
