@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from "uuid";
 import { customIncludes } from "./common";
 
 // ----------- Demo data -----------
-const posts = [
+let posts = [
   {
     id: "1",
     title: "iphone SE is the best",
@@ -44,7 +44,7 @@ const posts = [
   },
 ];
 
-const users = [
+let users = [
   {
     id: "1",
     name: "Takuya Kikuchi",
@@ -64,7 +64,7 @@ const users = [
   },
 ];
 
-const comments = [
+let comments = [
   {
     id: "1",
     text: "This is a comment.",
@@ -104,6 +104,7 @@ const typeDefs = `
 
   type Mutation {
     createUser(data: CreateUserInput!): User!
+    deleteUser(id: ID!): User!
     createPost(data: CreatePostInput!): Post!
     createComment(data: CreateCommentInput!): Comment!
   }
@@ -195,6 +196,35 @@ const resolvers = {
 
       users.push(user);
       return user;
+    },
+
+    // Delete User
+    deleteUser(parent, args, ctx, info) {
+      const userIndex = users.findIndex((user) => user.id === args.id);
+
+      if (userIndex === -1) {
+        throw new Error("User doesn't exist.");
+      }
+
+      // Delete User
+      const deletedUsers = users.splice(userIndex, 1);
+
+      // Delete related Posts & attached Comments
+      posts = posts.filter((post) => {
+        const match = post.author === args.id;
+
+        if (match) {
+          // Delete comments attached to deleted post
+          comments = comments.filter((comment) => post.id !== comment.id);
+        }
+
+        return !match;
+      });
+
+      // Delete User Comments
+      comments = comments.filter((comment) => comment.author !== args.id);
+
+      return deletedUsers[0];
     },
 
     // Create New Post
