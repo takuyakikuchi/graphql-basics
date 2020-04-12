@@ -2,103 +2,20 @@
 import { GraphQLServer } from "graphql-yoga";
 import { v4 as uuidv4 } from "uuid";
 
-// ----------- Demo data -----------
-let posts = [
-  {
-    id: "1",
-    title: "iphone SE is the best",
-    body: "The reason is because it is fit in a hand.",
-    published: false,
-    author: "1",
-  },
-  {
-    id: "2",
-    title: "Greens are great",
-    body: "Greens has positive influences physically and mentally",
-    published: false,
-    author: "1",
-  },
-  {
-    id: "3",
-    title: "Bose is the king!",
-    body: "Without the headphone, I cannot work",
-    published: false,
-    author: "2",
-  },
-  {
-    id: "4",
-    title: "Dummy title 4",
-    body: "This is the body of dummy title 4!",
-    published: false,
-    author: "1",
-  },
-  {
-    id: "5",
-    title: "Dummy title 5",
-    body: "This is the body of dummy title 5!",
-    published: false,
-    author: "3",
-  },
-];
-
-let users = [
-  {
-    id: "1",
-    name: "Takuya Kikuchi",
-    email: "takuya@gmail.com",
-    age: 30,
-  },
-  {
-    id: "2",
-    name: "Fumiko Kikuchi",
-    email: "fumiko@gmail.com",
-    age: 29,
-  },
-  {
-    id: "3",
-    name: "Hiroshi Yoshida",
-    email: "hiroshi@gmail.com",
-  },
-];
-
-let comments = [
-  {
-    id: "1",
-    text: "This is a comment.",
-    author: "1",
-    post: "1",
-  },
-  {
-    id: "2",
-    text: "The chime just ringed.",
-    author: "1",
-    post: "1",
-  },
-  {
-    id: "3",
-    text: "Dinner tonight is curry.",
-    author: "1",
-    post: "3",
-  },
-  {
-    id: "4",
-    text: "Excellent!",
-    author: "3",
-    post: "4",
-  },
-];
+// Internal
+import db from "./db";
 
 // ------------- Resolver(function) ----------------
 const resolvers = {
   Query: {
-    comments(parent, args, ctx, info) {
-      return comments;
+    comments(parent, args, { db }, info) {
+      return db.comments;
     },
 
-    posts(parent, args, ctx, info) {
-      if (!args.query) return posts;
+    posts(parent, args, { db }, info) {
+      if (!args.query) return db.posts;
 
-      return posts.filter((post) => {
+      return db.posts.filter((post) => {
         const titleMatched = post.title
           .toLowerCase()
           .includes(args.query.toLowerCase());
@@ -111,9 +28,9 @@ const resolvers = {
       });
     },
 
-    users(parent, args, ctx, info) {
-      if (!args.query) return users;
-      return users.filter((user) => {
+    users(parent, args, { db }, info) {
+      if (!args.query) return db.users;
+      return db.users.filter((user) => {
         return user.name.toLowerCase().includes(args.query.toLowerCase());
       });
     },
@@ -121,8 +38,10 @@ const resolvers = {
 
   Mutation: {
     // Create New User
-    createUser(parent, args, ctx, info) {
-      const emailTaken = users.some((user) => user.email === args.data.email);
+    createUser(parent, args, { db }, info) {
+      const emailTaken = db.users.some(
+        (user) => user.email === args.data.email
+      );
 
       if (emailTaken) {
         throw new Error("Email already taken.");
@@ -133,23 +52,23 @@ const resolvers = {
         ...args.data,
       };
 
-      users.push(user);
+      db.users.push(user);
       return user;
     },
 
     // Delete User
-    deleteUser(parent, args, ctx, info) {
-      const userIndex = users.findIndex((user) => user.id === args.id);
+    deleteUser(parent, args, { db }, info) {
+      const userIndex = db.users.findIndex((user) => user.id === args.id);
 
       if (userIndex === -1) {
         throw new Error("User doesn't exist.");
       }
 
       // Delete User
-      const deletedUsers = users.splice(userIndex, 1);
+      const deletedUsers = db.users.splice(userIndex, 1);
 
       // Delete related Posts & attached Comments
-      posts = posts.filter((post) => {
+      db.posts = db.posts.filter((post) => {
         const match = post.author === args.id;
 
         if (match) {
@@ -161,14 +80,14 @@ const resolvers = {
       });
 
       // Delete User Comments
-      comments = comments.filter((comment) => comment.author !== args.id);
+      db.comments = db.comments.filter((comment) => comment.author !== args.id);
 
       return deletedUsers[0];
     },
 
     // Create New Post
-    createPost(parent, args, ctx, info) {
-      const userExist = users.some((user) => user.id === args.data.author);
+    createPost(parent, args, { db }, info) {
+      const userExist = db.users.some((user) => user.id === args.data.author);
 
       if (!userExist) {
         throw new Error("User doesn't exist.");
@@ -179,31 +98,31 @@ const resolvers = {
         ...args.data,
       };
 
-      posts.push(post);
+      db.posts.push(post);
       return post;
     },
 
     // Delete Post & appended Comments
-    deletePost(parent, args, ctx, info) {
-      const postIndex = posts.findIndex((post) => post.id === args.id);
+    deletePost(parent, args, { db }, info) {
+      const postIndex = db.posts.findIndex((post) => post.id === args.id);
 
       if (postIndex === -1) {
         throw new Error("Post with the given ID doesn't exist.");
       }
 
       // Delete Post
-      const deletedPosts = posts.splice(postIndex, 1);
+      const deletedPosts = db.posts.splice(postIndex, 1);
 
       // Delete appended Comments
-      comments = comments.filter((comment) => comment.post !== args.id);
+      db.comments = db.comments.filter((comment) => comment.post !== args.id);
 
       return deletedPosts[0];
     },
 
     // Create New Comment
-    createComment(parent, args, ctx, info) {
-      const userExist = users.some((user) => user.id === args.data.author);
-      const postExist = posts.some(
+    createComment(parent, args, { db }, info) {
+      const userExist = db.users.some((user) => user.id === args.data.author);
+      const postExist = db.posts.some(
         (post) => post.id === args.data.post && post.published
       );
 
@@ -218,13 +137,13 @@ const resolvers = {
         ...args.data,
       };
 
-      comments.push(comment);
+      db.comments.push(comment);
       return comment;
     },
 
     // Delete Comment
-    deleteComment(parent, args, ctx, info) {
-      const commentIndex = comments.findIndex(
+    deleteComment(parent, args, { db }, info) {
+      const commentIndex = db.comments.findIndex(
         (comment) => comment.id === args.id
       );
 
@@ -232,44 +151,44 @@ const resolvers = {
         throw new Error("Comment with the given ID doesn't exist.");
       }
 
-      return comments.splice(commentIndex, 1)[0];
+      return db.comments.splice(commentIndex, 1)[0];
     },
   },
 
   Comment: {
-    author(parent, args, ctx, info) {
-      return users.find((user) => {
+    author(parent, args, { db }, info) {
+      return db.users.find((user) => {
         return user.id === parent.author;
       });
     },
-    post(parent, args, ctx, info) {
-      return posts.find((post) => {
+    post(parent, args, { db }, info) {
+      return db.posts.find((post) => {
         return post.id === parent.post;
       });
     },
   },
 
   Post: {
-    author(parent, args, ctx, info) {
-      return users.find((user) => {
+    author(parent, args, { db }, info) {
+      return db.users.find((user) => {
         return user.id === parent.author;
       });
     },
-    comments(parent, args, ctx, info) {
-      return comments.filter((comment) => {
+    comments(parent, args, { db }, info) {
+      return db.comments.filter((comment) => {
         return comment.post === parent.id;
       });
     },
   },
 
   User: {
-    posts(parent, args, ctx, info) {
-      return posts.filter((post) => {
+    posts(parent, args, { db }, info) {
+      return db.posts.filter((post) => {
         return post.author === parent.id;
       });
     },
-    comments(parent, args, ctx, info) {
-      return comments.filter((comment) => {
+    comments(parent, args, { db }, info) {
+      return db.comments.filter((comment) => {
         return comment.author === parent.id;
       });
     },
@@ -280,6 +199,9 @@ const resolvers = {
 const server = new GraphQLServer({
   typeDefs: "./src/schema.graphql",
   resolvers,
+  context: {
+    db,
+  },
 });
 
 server.start(() => {
