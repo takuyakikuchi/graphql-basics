@@ -171,9 +171,7 @@ const resolvers = {
 
       const user = {
         id: uuidv4(),
-        name: args.name,
-        email: args.email,
-        age: args.age,
+        ...args,
       };
 
       users.push(user);
@@ -190,10 +188,7 @@ const resolvers = {
 
       const post = {
         id: uuidv4(),
-        title: args.title,
-        body: args.body,
-        published: args.published,
-        author: args.author,
+        ...args,
       };
 
       posts.push(post);
@@ -203,19 +198,19 @@ const resolvers = {
     // Create New Comment
     createComment(parent, args, ctx, info) {
       const userExist = users.some((user) => user.id === args.author);
-      const postExist = posts.some((post) => post.id === args.post);
+      const postExist = posts.some(
+        (post) => post.id === args.post && post.published
+      );
 
       if (!userExist) {
         throw new Error("User doesn't exist.");
       } else if (!postExist) {
-        throw new Error("Post doesn't exist.");
+        throw new Error("Post doesn't exist or not published.");
       }
 
       const comment = {
         id: uuidv4(),
-        text: args.text,
-        author: args.author,
-        post: args.post,
+        ...args,
       };
 
       comments.push(comment);
