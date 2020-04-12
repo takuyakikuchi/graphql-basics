@@ -2,9 +2,6 @@
 import { GraphQLServer } from "graphql-yoga";
 import { v4 as uuidv4 } from "uuid";
 
-// Internal
-import { customIncludes } from "./common";
-
 // ----------- Demo data -----------
 let posts = [
   {
@@ -167,17 +164,22 @@ const resolvers = {
       if (!args.query) return posts;
 
       return posts.filter((post) => {
-        return (
-          customIncludes(post.title, args.query) ||
-          customIncludes(post.body, args.query)
-        );
+        const titleMatched = post.title
+          .toLowerCase()
+          .includes(args.query.toLowerCase());
+
+        const bodyMatched = post.body
+          .toLowerCase()
+          .includes(args.query.toLowerCase());
+
+        return titleMatched || bodyMatched;
       });
     },
 
     users(parent, args, ctx, info) {
       if (!args.query) return users;
       return users.filter((user) => {
-        return customIncludes(user.name, args.query);
+        return user.name.toLowerCase().includes(args.query.toLowerCase());
       });
     },
   },
