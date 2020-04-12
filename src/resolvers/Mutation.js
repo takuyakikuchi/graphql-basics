@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 
 const Mutation = {
+  // --------------------- User ---------------------
   // Create New User
   createUser(parent, args, { db }, info) {
     const emailTaken = db.users.some((user) => user.email === args.data.email);
@@ -47,6 +48,37 @@ const Mutation = {
     return deletedUsers[0];
   },
 
+  // Update User
+  updateUser(parent, args, { db }, info) {
+    const { id, data } = args;
+
+    const user = db.users.find((user) => user.id === id);
+
+    if (!user) {
+      throw new Error("User with given ID doesn't exist.");
+    }
+
+    if (typeof data.name === "string") {
+      user.name = data.name;
+    }
+
+    if (typeof data.email === "string") {
+      const emailExist = db.users.some((user) => user.email === data.email);
+      if (emailExist) {
+        throw new Error("The given email is already taken.");
+      }
+
+      user.email = data.email;
+    }
+
+    if (typeof data.age !== "undefined") {
+      user.age = data.age;
+    }
+
+    return user;
+  },
+
+  // --------------------- Post ---------------------
   // Create New Post
   createPost(parent, args, { db }, info) {
     const userExist = db.users.some((user) => user.id === args.data.author);
@@ -81,6 +113,7 @@ const Mutation = {
     return deletedPosts[0];
   },
 
+  // --------------------- Comment ---------------------
   // Create New Comment
   createComment(parent, args, { db }, info) {
     const userExist = db.users.some((user) => user.id === args.data.author);
