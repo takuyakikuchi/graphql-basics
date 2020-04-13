@@ -3,7 +3,7 @@ const posts = [
     id: "1",
     title: "iphone SE is the best",
     body: "The reason is because it is fit in a hand.",
-    published: false,
+    published: true,
     author: "1",
   },
   {

@@ -22,6 +22,10 @@ type Mutation {
   updateComment(id: ID!, data: UpdateCommentInput): Comment!
 }
 
+type Subscription {
+  comment(postId: ID!): Comment!
+}
+
 # ------------ Input type --------------
 # User Input
 input CreateUserInput {
