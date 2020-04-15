@@ -93,7 +93,10 @@ const Mutation = {
     };
 
     db.posts.push(post);
-    pubsub.publish("new post", { post });
+
+    if (post.published) {
+      pubsub.publish("new post", { post });
+    }
 
     return post;
   },
