@@ -107,7 +107,7 @@ const Mutation = {
   },
 
   // Delete Post & appended Comments
-  deletePost(parent, args, { db }, info) {
+  deletePost(parent, args, { db, pubsub }, info) {
     const postIndex = db.posts.findIndex((post) => post.id === args.id);
 
     if (postIndex === -1) {
@@ -115,17 +115,28 @@ const Mutation = {
     }
 
     // Delete Post
-    const deletedPosts = db.posts.splice(postIndex, 1);
+    const [deletedPost] = db.posts.splice(postIndex, 1);
 
     // Delete appended Comments
     db.comments = db.comments.filter((comment) => comment.post !== args.id);
 
-    return deletedPosts[0];
+    if (deletedPost) {
+      pubsub.publish("post", {
+        post: {
+          mutation: "DELETED",
+          data: deletedPost,
+        },
+      });
+    }
+
+    return deletedPost;
   },
 
-  updatePost(parent, args, { db }, info) {
+  updatePost(parent, args, { db, pubsub }, info) {
     const { id, data } = args;
     const post = db.posts.find((post) => post.id === id);
+    const originalState = { ...post };
+    let mutation = "UPDATED";
 
     if (!post) {
       throw new Error("Post with given ID doesn't exist.");
@@ -141,6 +152,23 @@ const Mutation = {
 
     if (typeof data.published === "boolean") {
       post.published = data.published;
+      // published false => true
+      if (post.published && !originalState.published) {
+        mutation = "CREATED";
+      }
+      // published true => false
+      else if (!post.published && originalState.published) {
+        mutation = "DELETED";
+      }
+    }
+
+    if (post) {
+      pubsub.publish("post", {
+        post: {
+          mutation,
+          data: post,
+        },
+      });
     }
 
     return post;

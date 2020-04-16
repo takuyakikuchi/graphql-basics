@@ -52,7 +52,7 @@ input CreatePostInput {
 input UpdatePostInput {
   title: String
   body: String
-  published: Int
+  published: Boolean
 }
 
 # User Input
