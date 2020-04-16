@@ -227,7 +227,7 @@ const Mutation = {
     return deletedComment;
   },
 
-  updateComment(parent, args, { db }, info) {
+  updateComment(parent, args, { db, pubsub }, info) {
     const { id, data } = args;
     const comment = db.comments.find((comment) => comment.id === id);
 
@@ -237,6 +237,12 @@ const Mutation = {
 
     if (typeof data.text === "string") {
       comment.text = data.text;
+      pubsub.publish("comment", {
+        comment: {
+          mutation: "UPDATED",
+          data: comment,
+        },
+      });
     }
 
     return comment;
