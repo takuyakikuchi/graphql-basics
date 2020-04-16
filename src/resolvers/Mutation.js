@@ -195,7 +195,7 @@ const Mutation = {
 
     if (comment) {
       db.comments.push(comment);
-      pubsub.publish("comment", {
+      pubsub.publish(`comment ${args.data.post}`, {
         comment: {
           mutation: "CREATED",
           data: comment,
@@ -216,9 +216,9 @@ const Mutation = {
       throw new Error("Comment with the given ID doesn't exist.");
     }
 
-    const deletedComment = db.comments.splice(commentIndex, 1)[0];
+    const [deletedComment] = db.comments.splice(commentIndex, 1);
 
-    pubsub.publish("comment", {
+    pubsub.publish(`comment ${deletedComment.post}`, {
       comment: {
         mutation: "DELETED",
         data: deletedComment,
@@ -237,7 +237,7 @@ const Mutation = {
 
     if (typeof data.text === "string") {
       comment.text = data.text;
-      pubsub.publish("comment", {
+      pubsub.publish(`comment ${comment.post}`, {
         comment: {
           mutation: "UPDATED",
           data: comment,
