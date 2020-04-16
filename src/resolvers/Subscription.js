@@ -15,7 +15,7 @@ const Subscription = {
 
   post: {
     subscribe(parent, args, { pubsub }, info) {
-      return pubsub.asyncIterator(`new post`);
+      return pubsub.asyncIterator("post");
     },
   },
 };
