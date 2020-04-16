@@ -9,7 +9,7 @@ const Subscription = {
         throw new Error("Post with given ID does not exist.");
       }
 
-      return pubsub.asyncIterator(`comment ${postId}`);
+      return pubsub.asyncIterator("comment");
     },
   },
 
